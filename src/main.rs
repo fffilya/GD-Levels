@@ -11,6 +11,6 @@ fn main() {
         }
     };
     println!("{}", level.0);
-    level.add(vec![Component::ID(3)]);
+    level.add(vec![Component::ID(3), Component::X(15), Component::Y(15), Component::FlipX(true), Component::Groups(vec![1, 5, 10])]);
     println!("{}", level.0);
 }

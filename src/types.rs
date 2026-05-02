@@ -1,10 +1,12 @@
 use std::fs;
 use std::io::Read;
+use std::fmt::Write;
 use flate2::read::{GzDecoder, DeflateDecoder};
 use base64::{prelude::BASE64_STANDARD, engine::general_purpose, Engine as _};
 use regex::Regex;
 
-// the level struct is contains only String (string of gd Level), but i did it as struct only cuz i can make methods that can be easly used by users
+// the level struct is contains only String (string of gd Level)
+// but i did it as struct only cuz i can make methods that can be easly used by users
 pub struct Level(pub String);
 // the GDFile struct is contains only String as well but of entire gd save file
 pub struct GDFile(pub String);
@@ -93,9 +95,32 @@ impl Level {
         for component in components {
             match component {
                 Component::ID(id) => {object.push_str(&format!("1,{id}"))}
-                Component::X(x) => {object.push_str(&format!("2, {x}"))}
-                Component::Y(y) => {object.push_str(&format!("3, {y}"))}
-                Component::Rotation(rot) => {object.push_str(&format!("6, {rot}"))}
+                Component::X(x) => {object.push_str(&format!("2,{x}"))}
+                Component::Y(y) => {object.push_str(&format!("3,{y}"))}
+                Component::FlipX(isFlipped) => {
+                    let isFlip: u8;
+                    if isFlipped {isFlip = 1}
+                    else {isFlip = 0}
+                    object.push_str(&format!("4,{isFlip}"));
+                }
+                Component::FlipY(isFlipped) => {
+                    let isFlip: u8;
+                    if isFlipped {isFlip = 1}
+                    else {isFlip = 0}
+                    object.push_str(&format!("4,{isFlip}"));
+                }
+                Component::Rotation(rot) => {object.push_str(&format!("6,{rot}"))}
+                Component::MainColor(id) => {object.push_str(&format!("21,{id}"))}
+                Component::SecondaryColor(id) => {object.push_str(&format!("22,{id}"))}
+                Component::ZLayer(layer) => {object.push_str(&format!("24,{layer}"))}
+                Component::ZOrder(ord) => {object.push_str(&format!("25,{ord}"))}
+                Component::Groups(grps) => {
+                    object.push_str("57,");
+                    for i in 0..grps.len()-1 {
+                        write!(object, "{}.", grps[i]);
+                    }
+                    write!(object, "{}", grps[grps.len()-1]);
+                }
                 _ => {}
             }
             object.push_str(",");
