@@ -15,8 +15,9 @@ pub struct GDFile(pub String);
 // about components and object is in 'add' method of Level struct
 pub enum Component {
     ID(u16),
-    X(i64),
-    Y(i64),
+    X(f64),
+    Y(f64),
+    Scale(f64),
     FlipX(bool),
     FlipY(bool),
     Rotation(i16),
@@ -25,6 +26,7 @@ pub enum Component {
     ZLayer(u16),
     ZOrder(u16),
     Groups(Vec<u16>),
+    MainColorHSV(Vec<u8>)
 }
 
 impl GDFile {
@@ -121,12 +123,14 @@ impl Level {
                     }
                     write!(object, "{}", grps[grps.len()-1]);
                 }
+                Component::Scale(scl) => {object.push_str(&format!("32,{scl}"))}
                 _ => {}
             }
             object.push_str(",");
         }
         // adding 155th component to the object
-        // no one knows but it appears in every object on modern versions so i decided to add it to
+        // no one knows for sure what it does
+        // but it appears in every object on modern versions so i decided to add it to
         object.push_str("155,1;");
         // println!("{}", object); 
         &self.0.push_str(&object);
