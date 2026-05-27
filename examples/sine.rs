@@ -1,6 +1,6 @@
 use gdlevels::types::*;
 
-const SINE_COEFFICIENT: f64 = 15.0;
+const SINE_COEFFICIENT: f64 = 30.0;
 
 fn main() {
     let gdfile = GDFile::decode(".result/CCLocalLevels.dat");

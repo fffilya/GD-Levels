@@ -4,12 +4,18 @@ use std::fmt::Write;
 use flate2::read::{GzDecoder, DeflateDecoder};
 use base64::{prelude::BASE64_STANDARD, engine::general_purpose, Engine as _};
 use regex::Regex;
+use arboard::Clipboard;
 
 // the level struct is contains only String (string of gd Level)
 // but i did it as struct only cuz i can make methods that can be easly used by users
-pub struct Level(pub String);
+pub struct Level<State>(pub String, State);
+// typeState pattern (i love it so much)
+pub struct Real;
+pub struct Empty;
+
 // the GDFile struct is contains only String as well but of entire gd save file
 pub struct GDFile(pub String);
+
 
 // components that user can use to add object to the level with some more "humanly readable" method
 // about components and object is in 'add' method of Level struct
@@ -20,13 +26,13 @@ pub enum Component {
     Scale(f64),
     FlipX(bool),
     FlipY(bool),
-    Rotation(i16),
+    Rotation(f32),
     MainColor(u16),
     SecondaryColor(u16),
     ZLayer(u16),
     ZOrder(u16),
     Groups(Vec<u16>),
-    MainColorHSV(Vec<u8>)
+    MainColorHSV([u8; 3])
 }
 
 impl GDFile {
@@ -54,7 +60,7 @@ impl GDFile {
     }
     // this method returning Level struct what contains only level's save file part
     // so the entire goal of this method is to find this level by its name and then decode it
-    pub fn find_level(&self, level_name: &str) -> Result<Level, String> {
+    pub fn find_level(&self, level_name: &str) -> Result<Level<Real>, String> {
         /* finding encrypted level through regex
         * for those who wondering regex works by using gd tags where:
         * first <s> contains file name
@@ -77,11 +83,30 @@ impl GDFile {
         let mut gzdecoder = DeflateDecoder::new(&base_decoded[10..]);
         let mut result = String::new();
         gzdecoder.read_to_string(&mut result).expect("failed to read to string");
-        Ok(Level(result))
+        Ok(Level(result, Real))
     }
 }
 
-impl Level {
+impl Level<Empty> {
+    pub fn empty() -> Self {
+        Level(String::from(""), Empty)
+    }
+    pub fn copyToClipboard(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let mut clipboard = Clipboard::new()?;
+        clipboard.set_text(&self.0)?;
+
+        println!("level was copied to the clipboard");
+        Ok(())
+    }
+}
+
+impl Level<Real> {
+    pub fn encode() {
+        todo!("to make an encoding of the Real level");
+    }
+}
+
+impl<T> Level<T> {
     // this function adding one object to the level
     pub fn add(&mut self, components: Vec<Component>) {
         /* if you wondering objects in gd levels look like this: 1,5,2,15,3,15,6,30; etc.
