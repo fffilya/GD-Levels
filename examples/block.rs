@@ -1,4 +1,5 @@
 use gdlevels::types::*;
+use gdlevels::level::Level;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file = gdlevels::decode(".results/CCLocalLevels.dat");

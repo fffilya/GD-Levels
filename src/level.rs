@@ -1,6 +1,9 @@
-use crate::types::{Level, Component, Empty, Real};
+use crate::types::{Component, Empty, Real};
 use std::{fmt::Write, thread, time::Duration};
 use arboard::Clipboard;
+// the level struct is contains only String (string of gd Level)
+// but i did it as struct only cuz i can make methods that can be easly used by users
+pub struct Level<State>(String, State);
 
 impl Level<Empty> {
     pub fn empty() -> Self {
@@ -25,6 +28,9 @@ impl Level<Empty> {
 }
 
 impl Level<Real> {
+    pub fn real(text: String) -> Self {
+        Level(text, Real)
+    }
     pub fn encode() {
         todo!("to make an encoding of the Real level");
     }

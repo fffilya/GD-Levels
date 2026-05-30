@@ -1,4 +1,5 @@
-use crate::types::{Real, Level, GDFile};
+use crate::types::{Real, GDFile};
+use crate::level::Level;
 use flate2::read::{GzDecoder, DeflateDecoder};
 use base64::{prelude::BASE64_STANDARD, engine::general_purpose, Engine as _};
 use regex::Regex;
@@ -52,7 +53,8 @@ impl GDFile {
         let mut gzdecoder = DeflateDecoder::new(&base_decoded[10..]);
         let mut result = String::new();
         gzdecoder.read_to_string(&mut result).expect("failed to read to string");
-        Ok(Level(result, Real))
+        let level = Level::real(result);
+        Ok(level)
     }
 }
 

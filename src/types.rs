@@ -1,7 +1,4 @@
-
-// the level struct is contains only String (string of gd Level)
-// but i did it as struct only cuz i can make methods that can be easly used by users
-pub struct Level<State>(pub String, pub State);
+use crate::level::Level;
 // typeState pattern (i love it so much)
 pub struct Real;
 pub struct Empty;

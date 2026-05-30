@@ -1,4 +1,5 @@
 use gdlevels::types::*;
+use gdlevels::level::Level;
 use gdlevels::types::Component::*;
 
 /* lets make rainbow using MainColorHSV Component!!!!

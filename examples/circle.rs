@@ -1,4 +1,5 @@
 use gdlevels::types::*;
+use gdlevels::level::Level;
 
 const CIRCLE_COEFFICIENT: f64 = 120.0;
 
@@ -13,6 +14,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         level.add(vec![Component::ID(211), Component::X(t.to_radians().sin()*CIRCLE_COEFFICIENT), Component::Y(t.to_radians().cos()*CIRCLE_COEFFICIENT), Component::Scale(0.5), Component::Rotation(t as f32)]);
     }
     
-    println!("{}", level.0);
     Ok(())
 }
