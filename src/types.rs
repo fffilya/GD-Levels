@@ -1,14 +1,7 @@
-use std::fs;
-use std::io::Read;
-use std::fmt::Write;
-use flate2::read::{GzDecoder, DeflateDecoder};
-use base64::{prelude::BASE64_STANDARD, engine::general_purpose, Engine as _};
-use regex::Regex;
-use arboard::Clipboard;
 
 // the level struct is contains only String (string of gd Level)
 // but i did it as struct only cuz i can make methods that can be easly used by users
-pub struct Level<State>(pub String, State);
+pub struct Level<State>(pub String, pub State);
 // typeState pattern (i love it so much)
 pub struct Real;
 pub struct Empty;
@@ -16,6 +9,13 @@ pub struct Empty;
 // the GDFile struct is contains only String as well but of entire gd save file
 pub struct GDFile(pub String);
 
+pub struct HSV {
+    pub hue: i16,
+    pub sat: f32,
+    pub val: f32,
+    pub sat_checked: bool,
+    pub val_checked: bool,
+}
 
 // components that user can use to add object to the level with some more "humanly readable" method
 // about components and object is in 'add' method of Level struct
@@ -32,132 +32,7 @@ pub enum Component {
     ZLayer(u16),
     ZOrder(u16),
     Groups(Vec<u16>),
-    MainColorHSV([u8; 3])
+    MainColorHSV(HSV),
+    SecondaryColorHSV(HSV)
 }
 
-impl GDFile {
-    pub fn decode(file_path: &str) -> Self {
-        let mut file = fs::read(file_path).expect("file cant be found");
-
-        // Decrypt Magic here:
-        for byte in file.iter_mut() {
-            *byte ^= 11;
-        }
-        let encoded = String::from_utf8(file).expect("failed to get string from utf-8");
-        let decoded = general_purpose::STANDARD_NO_PAD.decode(encoded
-            .trim()
-            .replace('\n', "")
-            .replace('\r', "")
-            .replace(' ', "")
-            .replace('-', "+")
-            .replace('_', "/"))
-            .expect("failed to decode from base64");
-        let mut decoder = GzDecoder::new(&decoded[..]);
-        let mut result = String::new();
-        decoder.read_to_string(&mut result).expect("failed to read to string");
-
-        GDFile(result)
-    }
-    // this method returning Level struct what contains only level's save file part
-    // so the entire goal of this method is to find this level by its name and then decode it
-    pub fn find_level(&self, level_name: &str) -> Result<Level<Real>, String> {
-        /* finding encrypted level through regex
-        * for those who wondering regex works by using gd tags where:
-        * first <s> contains file name
-        * <k> contains unique tag (k4 means level)
-        * and second <s> contains encrypted level information */
-        let regex = format!("(?mu)<s>{}</s><k>k4</k><s>([^<]+)</s>", level_name);
-        let finder = Regex::new(&regex).expect("failed to create regular expression");
-        // the rest of the function is decoding
-        // honestly i making this comments after few months from making code, so idk what is this doing
-        let finded = finder.captures_iter(&self.0);
-        let mut encoded: &str = "";
-        for matched in finded {
-            if let Some(res) = matched.get(1) {
-                encoded = res.as_str();
-                break
-            }
-            return Err("failed to find level".to_string())
-        }
-        let base_decoded = BASE64_STANDARD.decode(encoded.replace('-', "+").replace('_', "/")).expect("failed to decode from base64");
-        let mut gzdecoder = DeflateDecoder::new(&base_decoded[10..]);
-        let mut result = String::new();
-        gzdecoder.read_to_string(&mut result).expect("failed to read to string");
-        Ok(Level(result, Real))
-    }
-}
-
-impl Level<Empty> {
-    pub fn empty() -> Self {
-        Level(String::from(""), Empty)
-    }
-    pub fn copyToClipboard(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let mut clipboard = Clipboard::new()?;
-        clipboard.set_text(&self.0)?;
-
-        println!("level was copied to the clipboard");
-        Ok(())
-    }
-}
-
-impl Level<Real> {
-    pub fn encode() {
-        todo!("to make an encoding of the Real level");
-    }
-}
-
-impl<T> Level<T> {
-    // this function adding one object to the level
-    pub fn add(&mut self, components: Vec<Component>) {
-        /* if you wondering objects in gd levels look like this: 1,5,2,15,3,15,6,30; etc.
-         * here you can split string by couples: 1,5 2,5 3,5 6,30
-         * first number mean ID of component, second mean value.
-         * 1st component is ID, 2nd is x, 3rd is y, 6th is rotation etc.
-         * so that means its an object with id of 5, x and y of 15, and rotation of 30.
-         * i explained it very poorly so you can read more here:
-         * https://boomlings.dev/resources/client/level-components/level-string
-         */
-        let mut object: String = String::from("");
-        // parsing components and add it to the object as string
-        for component in components {
-            match component {
-                Component::ID(id) => {object.push_str(&format!("1,{id}"))}
-                Component::X(x) => {object.push_str(&format!("2,{x}"))}
-                Component::Y(y) => {object.push_str(&format!("3,{y}"))}
-                Component::FlipX(isFlipped) => {
-                    let isFlip: u8;
-                    if isFlipped {isFlip = 1}
-                    else {isFlip = 0}
-                    object.push_str(&format!("4,{isFlip}"));
-                }
-                Component::FlipY(isFlipped) => {
-                    let isFlip: u8;
-                    if isFlipped {isFlip = 1}
-                    else {isFlip = 0}
-                    object.push_str(&format!("4,{isFlip}"));
-                }
-                Component::Rotation(rot) => {object.push_str(&format!("6,{rot}"))}
-                Component::MainColor(id) => {object.push_str(&format!("21,{id}"))}
-                Component::SecondaryColor(id) => {object.push_str(&format!("22,{id}"))}
-                Component::ZLayer(layer) => {object.push_str(&format!("24,{layer}"))}
-                Component::ZOrder(ord) => {object.push_str(&format!("25,{ord}"))}
-                Component::Groups(grps) => {
-                    object.push_str("57,");
-                    for i in 0..grps.len()-1 {
-                        write!(object, "{}.", grps[i]);
-                    }
-                    write!(object, "{}", grps[grps.len()-1]);
-                }
-                Component::Scale(scl) => {object.push_str(&format!("32,{scl}"))}
-                _ => {}
-            }
-            object.push_str(",");
-        }
-        // adding 155th component to the object
-        // no one knows for sure what it does
-        // but it appears in every object on modern versions so i decided to add it to
-        object.push_str("155,1;");
-        // println!("{}", object); 
-        &self.0.push_str(&object);
-    }
-}
