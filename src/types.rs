@@ -1,4 +1,5 @@
 use crate::level::Level;
+use crate::object::Object;
 // typeState pattern (i love it so much)
 pub struct Real;
 pub struct Empty;
@@ -12,6 +13,12 @@ pub struct HSV {
     pub val: f32,
     pub sat_checked: bool,
     pub val_checked: bool,
+}
+
+#[derive(Debug)]
+pub enum Error {
+    WrongComponentInput,
+    IncompobileComponents
 }
 
 // components that user can use to add object to the level with some more "humanly readable" method

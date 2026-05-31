@@ -1,5 +1,6 @@
 use gdlevels::types::*;
 use gdlevels::level::Level;
+use gdlevels::object::Object;
 use gdlevels::types::Component::*;
 
 /* lets make rainbow using MainColorHSV Component!!!!
@@ -22,13 +23,13 @@ fn main() {
         for j in 0..30 {
             let x = i as f64;
             let y = j as f64;
-            level.add(vec![ID(211), X(x), Y(y), MainColor(COLOR_GROUP), ZOrder(i), MainColorHSV(HSV {
+            level.add(Object::new(vec![ID(211), X(x), Y(y), MainColor(COLOR_GROUP), ZOrder(i), MainColorHSV(HSV {
                 hue: (180 - i) as i16,
                 sat: 1.00,
                 val: 1.00,
                 sat_checked: false,
                 val_checked: false,
-            })]);
+            })]));
         }
     }
     
