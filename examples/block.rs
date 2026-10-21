@@ -11,7 +11,8 @@ use gdlevels::level::Level;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file = GDFile::decode(".result/CCLocalLevels.dat");
-    let mut level = file.find_level("testing")?;
+    let mut level = Level::empty();
+    file.find_level("testing", &mut level)?;
     
     // adding an object within level.add
     level.add(Object::new(vec![Component::ID(211), Component::X(30.0), Component::Y(30.0), Component::Rotation(45.0), Component::Scale(2.0)]));

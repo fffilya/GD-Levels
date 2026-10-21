@@ -1,8 +1,9 @@
 use crate::level::Level;
 use crate::object::Object;
 // typeState pattern (i love it so much)
-pub struct Real;
+pub struct Encoded;
 pub struct Empty;
+pub struct Decoded;
 
 // the GDFile struct is contains only String as well but of entire gd save file
 pub struct GDFile(pub String);
@@ -18,7 +19,8 @@ pub struct HSV {
 #[derive(Debug)]
 pub enum Error {
     WrongComponentInput,
-    IncompobileComponents
+    IncompobileComponents,
+    WrongIdentifierID
 }
 
 // components that user can use to add object to the level with some more "humanly readable" method

@@ -17,7 +17,7 @@ fn main() -> Result<(), Error> {
 
     // adding our move trigger where first argument is X, second is Y, and third is duration
     // note: 10 move trigger units = 30 game units = 1 block
-    level.add(Object::trigger(Trigger::Move{ x: 10, y: 0, duration: 0.5}, vec![TriggerComponent::TargetGroupID(1)], None)?);
+    level.add(Object::trigger(Trigger::Move{ x: 10, y: 0, duration: 0.5 }, vec![TriggerComponent::TargetGroupID(1)], None)?);
     
     let _ = level.copy_to_clipboard();
 

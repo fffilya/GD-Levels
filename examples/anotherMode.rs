@@ -13,7 +13,7 @@ const CIRCLE_COEFFICIENT: f64 = 120.0;
 
 fn main() {
     // creates Level("", Empty) 
-    // its the same level struct but instead its empty and also have Empty state instead of Real
+    // its the same level struct but instead its empty and also have Empty state instead of Decoded
     let mut level = Level::empty();
 
     // creating the same circle

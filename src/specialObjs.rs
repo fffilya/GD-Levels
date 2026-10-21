@@ -1,5 +1,9 @@
 pub enum SpecialObject {
     Coin(u8),
+    CollisionBlock{
+        id: u16,
+        is_dynamic: bool
+    }
 }
 
 pub enum Trigger {

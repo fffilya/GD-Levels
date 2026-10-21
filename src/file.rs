@@ -1,4 +1,4 @@
-use crate::types::{Real, GDFile};
+use crate::types::{Decoded, GDFile};
 use crate::level::Level;
 use flate2::read::{GzDecoder, DeflateDecoder};
 use base64::{prelude::BASE64_STANDARD, engine::general_purpose, Engine as _};
@@ -13,8 +13,7 @@ impl GDFile {
         for byte in file.iter_mut() {
             *byte ^= 11;
         }
-        let encoded = String::from_utf8(file).expect("failed to get string from utf-8");
-        let decoded = general_purpose::STANDARD_NO_PAD.decode(encoded
+        let encoded = String::from_utf8(file).expect("failed to get string from utf-8"); let decoded = general_purpose::STANDARD_NO_PAD.decode(encoded
             .trim()
             .replace('\n', "")
             .replace('\r', "")
@@ -28,9 +27,12 @@ impl GDFile {
 
         GDFile(result)
     }
+    fn print(&self) {
+        println!("{}", &self.0);
+    }
     // this method returning Level struct what contains only level's save file part
     // so the entire goal of this method is to find this level by its name and then decode it
-    pub fn find_level(&self, level_name: &str) -> Result<Level<Real>, String> {
+    pub fn find_level(self, level_name: &str, level: &mut Level) -> Result<(), String> {
         /* finding encrypted level through regex
         * for those who wondering regex works by using gd tags where:
         * first <s> contains file name
@@ -53,8 +55,8 @@ impl GDFile {
         let mut gzdecoder = DeflateDecoder::new(&base_decoded[10..]);
         let mut result = String::new();
         gzdecoder.read_to_string(&mut result).expect("failed to read to string");
-        let level = Level::real(result);
-        Ok(level)
+        level.add_decoded(result);
+        Ok(())
     }
 }
 

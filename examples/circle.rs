@@ -7,8 +7,9 @@ const CIRCLE_COEFFICIENT: f64 = 120.0;
 // its almost like sine, but now we adding cosine and Rotation (its not that neccesary but with it it looks way better)
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let gdfile = GDFile::decode(".result/CCLocalLevels.dat");
-    let mut level = gdfile.find_level("testing")?;
+    let file = GDFile::decode(".result/CCLocalLevels.dat");
+    let mut level = Level::empty();
+    file.find_level("testing", &mut level)?;
 
     for i in 0..=360 {
         let t = i as f64;

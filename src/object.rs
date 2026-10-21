@@ -125,6 +125,31 @@ impl Object {
         object.push_str("155,1;");
         Ok(Object{contain: object})
     }
+    pub fn special_object(obj: SpecialObject, components: Option<Vec<Component>>) -> Result<Self, Error> {
+        let mut object: String = String::from("");
+        match obj {
+            SpecialObject::Coin( id ) => {
+                object.push_str(&format!(
+                    "1,1329,12,{}",
+                    if id <= 3 { id } else { return Err(Error::WrongComponentInput) }
+                ));
+            }
+            SpecialObject::CollisionBlock { id, is_dynamic } => {
+                object.push_str(&format!(
+                    "1,1816,33,{},94,{}",
+                    if id <= 9999 {id} else { return Err(Error::WrongComponentInput) },
+                    u8::from(is_dynamic)
+                ));
+            }
+        }
+        object.push_str(",");
+        if let Some(cmps) = components {
+            object.push_str(&Object::parse(cmps));
+        }
+
+        object.push_str("155,1;");
+        Ok(Object { contain: object })
+    }
     pub fn contains(self) -> String {
         self.contain
     }
