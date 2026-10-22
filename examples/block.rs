@@ -1,6 +1,8 @@
-use gdlevels::types::*;
-use gdlevels::object::Object;
-use gdlevels::level::Level;
+use gdlevels::{
+    types::*,
+    object::Object,
+    level::Level
+};
 
 // now lets add your first object using method level.add and struct Object with method new()
 // level.add takes an Object
@@ -12,7 +14,7 @@ use gdlevels::level::Level;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file = GDFile::decode(".result/CCLocalLevels.dat");
     let mut level = Level::empty();
-    file.find_level("testing", &mut level)?;
+    let _ = file.find_level("testing", &mut level)?;
     
     // adding an object within level.add
     level.add(Object::new(vec![Component::ID(211), Component::X(30.0), Component::Y(30.0), Component::Rotation(45.0), Component::Scale(2.0)]));
