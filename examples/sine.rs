@@ -1,6 +1,7 @@
 use gdlevels::types::*;
 use gdlevels::object::Object;
 use gdlevels::level::Level;
+use gdlevels::component::Component;
 
 // now we can make sine using .sin function built in the rust
 

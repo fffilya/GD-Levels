@@ -1,6 +1,6 @@
 use gdlevels::object::Object;
-use gdlevels::types::Component::{ID, X, Y};
 use gdlevels::level::Level;
+use gdlevels::component::Component;
 
 // When i writting this comment Geometry Dash 2.209 update released just a few days ago
 // This update intoduced feature to share levels in Geometry Dash using files with .gdlvl extension
@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Lets add example block for our level
     // I want spike to appear
-    level.add(Object::new(vec![ID(8), X(90.0), Y(0.0)]));
+    level.add(Object::new(vec![Component::ID(8), Component::X(90.0), Component::Y(0.0)]));
 
     // now lets finally make a .gdlvl file out of this
     // you need to give this function:

@@ -14,6 +14,7 @@ impl Object {
         // parsing components and add it to the object as string
         for component in components {
             object.push_str(&component.parse());
+            object.push_str(",");
         }
         // adding 155th component to the object
         // no one knows for sure what it does

@@ -1,7 +1,8 @@
 use gdlevels::{
     types::*,
     object::Object,
-    level::Level
+    level::Level,
+    component::Component
 };
 
 // now lets add your first object using method level.add and struct Object with method new()

@@ -1,6 +1,7 @@
 use gdlevels::types::*;
 use gdlevels::object::Object;
 use gdlevels::level::Level;
+use gdlevels::component::Component;
 
 const CIRCLE_COEFFICIENT: f64 = 120.0;
 
