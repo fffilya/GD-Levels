@@ -1,5 +1,7 @@
-use crate::types::{Empty, Encoded, Decoded};
-use crate::object::Object;
+use crate::{
+    component::Component, object::Object, types::{split_string_by_cmps, split_string_by_obj}
+};
+use base64::alphabet::STANDARD;
 use flate2::write::DeflateEncoder;
 use flate2::Compression;
 use std::{fs, io::Read};
@@ -10,17 +12,15 @@ use flate2::write::GzEncoder;
 use arboard::Clipboard;
 use regex::Regex;
 // the level struct is contains only String (string of gd Level)
-// but i did it as struct only cuz i can make methods that can be easly used by users
-pub struct Level(String);
+pub struct Level(Vec<Object>);
 
 impl Level {
     pub fn empty() -> Self {
-        Level(String::from(""))
+        Level(vec![])
     }
     pub fn copy_to_clipboard(&self) -> Result<(), Box<dyn std::error::Error>> {
         
-        let to_copy = self.0.clone();
-
+        let to_copy: String = self.0.iter().map(|s| s.contains()).collect();
         thread::spawn(move || -> Result<(), arboard::Error> {
             let mut clipboard = Clipboard::new()?;
             clipboard.set_text(to_copy)?;
@@ -33,10 +33,15 @@ impl Level {
         thread::sleep(Duration::from_millis(500));
         Ok(())
     }
-    pub fn add_decoded(&mut self, decoded_string: String) {
-        let _ = &self.0.push_str(&decoded_string);
+    pub fn add_decoded(&mut self, decoded_string: String) -> Result<(), Box<dyn std::error::Error>> {
+        let split: Vec<Vec<(String, String)>> = split_string_by_obj(decoded_string).iter().map(|s| split_string_by_cmps(s.to_string())).collect();
+        let vec_cmps: Vec<Vec<Component>> = split.iter().map(|s| s.iter().map(|t| Component::from_str(t)).collect::<Result<Vec<_>, _>>()).collect::<Result<_, _>>()?;
+        let vec_objects: Vec<Object> = vec_cmps.iter().map(|s: &Vec<Component>| Object::new(s.to_vec())).collect();
+
+        let _ = &self.0.extend_from_slice(&vec_objects);
+        Ok(())
     }
-    pub fn encode(self) -> Level  {
+    /* pub fn encode(self) -> Level  {
         let mut encoder = DeflateEncoder::new(Vec::new(), Compression::default());
         encoder.write_all(&self.0.as_bytes()).expect("failed to encode");
         let compressed_bytes = encoder.finish().expect("failed to encode");
@@ -48,7 +53,7 @@ impl Level {
         let text = base64_str.replace('+', "-").replace('/', "_");
 
         Level(text)
-    }
+    } */
     // this function adding one object to the level
     pub fn add(&mut self, obj: Object) {
         /* if you wondering objects in gd levels look like this: 1,5,2,15,3,15,6,30; etc.
@@ -59,8 +64,7 @@ impl Level {
          * i explained it very poorly so you can read more here:
          * https://boomlings.dev/resources/client/level-components/level-string
          */
-        let object_contains = obj.contains();
-        let _ = &self.0.push_str(&object_contains.to_string());
+        let _ = &self.0.push(obj);
     }
     fn decode_file_gdlvl(&self, file: &Vec<u8>) -> Result<String, Box<dyn std::error::Error>> {
         let compressed = URL_SAFE.decode(&file)?;
@@ -83,7 +87,11 @@ impl Level {
         let mut level = String::new();
         gz.read_to_string(&mut level)?;
 
-        &self.0.push_str(&level);
+        let split: Vec<Vec<(String, String)>> = split_string_by_obj(level).iter().map(|s| split_string_by_cmps(s.to_string())).collect();
+        let vec_cmps: Vec<Vec<Component>> = split.iter().map(|s| s.iter().map(|t| Component::from_str(t)).collect::<Result<Vec<_>, _>>()).collect::<Result<_, _>>()?;
+        let vec_objects: Vec<Object> = vec_cmps.iter().map(|s: &Vec<Component>| Object::new(s.to_vec())).collect();
+
+        &self.0.extend(vec_objects);
 
         Ok(())
     }
@@ -92,8 +100,10 @@ impl Level {
         let file = self.decode_file_gdlvl(&raw)?;
         println!("file readed:\n{}\n\n", file);
 
+        let slf: String = self.0.iter().map(|s| s.contains()).collect();
+
         let mut gz = GzEncoder::new(Vec::new(), Compression::default());
-        gz.write_all(self.0.as_bytes())?;
+        gz.write_all(slf.as_bytes())?;
         let compressed = gz.finish()?;
         let encoded = URL_SAFE.encode(&compressed);
         println!("main part encoded:\n{}\n\n", encoded);
@@ -117,6 +127,6 @@ impl Level {
         Ok(())
     }
     pub fn print(&self) {
-        println!("{}", self.0);
+        println!("{:?}", self.0);
     }
 }

@@ -1,13 +1,8 @@
-use crate::level::Level;
-use crate::object::Object;
-// typeState pattern (i love it so much)
-pub struct Encoded;
-pub struct Empty;
-pub struct Decoded;
-
+use regex::Regex;
 // the GDFile struct is contains only String as well but of entire gd save file
 pub struct GDFile(pub String);
 
+#[derive(Clone, Debug)]
 pub struct HSV {
     pub hue: i16,
     pub sat: f32,
@@ -17,28 +12,22 @@ pub struct HSV {
 }
 
 #[derive(Debug)]
-pub enum Error {
+pub enum Error<'a> {
     WrongComponentInput,
     IncompobileComponents,
-    WrongIdentifierID
+    WrongIdentifierID,
+    InvalidComponent(&'a str)
 }
 
-// components that user can use to add object to the level with some more "humanly readable" method
-// about components and object is in 'add' method of Level struct
-pub enum Component {
-    ID(u16),
-    X(f64),
-    Y(f64),
-    Scale(f64),
-    FlipX(bool),
-    FlipY(bool),
-    Rotation(f32),
-    MainColor(u16),
-    SecondaryColor(u16),
-    ZLayer(u16),
-    ZOrder(u16),
-    Groups(Vec<u16>),
-    MainColorHSV(HSV),
-    SecondaryColorHSV(HSV)
+pub fn split_string_by_obj(str: String) -> Vec<String> {
+    let regex = Regex::new(r"[^;]+;?").unwrap();
+    regex.find_iter(&str)
+        .map(|m| m.as_str().to_string())
+        .collect()
 }
-
+pub fn split_string_by_cmps(str: String) -> Vec<(String, String)> {
+    let regex = Regex::new(r"([^,;]+),([^,;]+)").unwrap();
+    regex.captures_iter(&str)
+        .map(|c| (c[1].to_string(), c[2].to_string()))
+        .collect()
+}

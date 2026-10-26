@@ -1,4 +1,4 @@
-use crate::types::{Decoded, GDFile};
+use crate::types::GDFile;
 use crate::level::Level;
 use flate2::read::{GzDecoder, DeflateDecoder};
 use base64::{prelude::BASE64_STANDARD, engine::general_purpose, Engine as _};

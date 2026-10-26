@@ -1,7 +1,9 @@
-use crate::types::{Component, Error};
+use crate::types::Error;
+use crate::component::Component;
 use crate::specialObjs::*;
 use std::fmt::Write;
 
+#[derive(Clone, Debug)]
 pub struct Object {
     contain: String,
 }
@@ -11,58 +13,7 @@ impl Object {
         let mut object: String = String::from("");
         // parsing components and add it to the object as string
         for component in components {
-            match component {
-                Component::ID(id) => {object.push_str(&format!("1,{id}"))}
-                Component::X(x) => {object.push_str(&format!("2,{x}"))}
-                Component::Y(y) => {object.push_str(&format!("3,{y}"))}
-                Component::FlipX(is_flipped) => {
-                    let is_flip: u8;
-                    if is_flipped {is_flip = 1}
-                    else {is_flip = 0}
-                    object.push_str(&format!("4,{is_flip}"));
-                }
-                Component::FlipY(is_flipped) => {
-                    let is_flip: u8;
-                    if is_flipped {is_flip = 1}
-                    else {is_flip = 0}
-                    object.push_str(&format!("4,{is_flip}"));
-                }
-                Component::Rotation(rot) => {object.push_str(&format!("6,{rot}"))}
-                Component::MainColor(id) => {object.push_str(&format!("21,{id}"))}
-                Component::SecondaryColor(id) => {object.push_str(&format!("22,{id}"))}
-                Component::ZLayer(layer) => {object.push_str(&format!("24,{layer}"))}
-                Component::ZOrder(ord) => {object.push_str(&format!("25,{ord}"))}
-                Component::Groups(grps) => {
-                    object.push_str("57,");
-                    for i in 0..grps.len()-1 {
-                        let _ = write!(object, "{}.", grps[i]);
-                    }
-                    let _ = write!(object, "{}", grps[grps.len()-1]);
-                }
-                Component::Scale(scl) => {object.push_str(&format!("32,{scl}"))}
-                Component::MainColorHSV(HSV) => {
-                    object.push_str(&format!(
-                        "41,1,43,{}a{:.2}a{:.2}a{}a{}",
-                        HSV.hue,
-                        HSV.sat,
-                        HSV.val,
-                        if HSV.sat_checked {"1"} else {"0"},
-                        if HSV.val_checked {"1"} else {"0"}
-                    ));
-                }
-                Component::SecondaryColorHSV(HSV) => {
-                    object.push_str(&format!(
-                        "41,1,44,{}a{:.2}a{:.2}a{}a{}",
-                        HSV.hue,
-                        HSV.sat,
-                        HSV.val,
-                        if HSV.sat_checked {"1"} else {"0"},
-                        if HSV.val_checked {"1"} else {"0"}
-                    ));
-                }
-                _ => {}
-            }
-            object.push_str(",");
+            object.push_str(&component.parse());
         }
         // adding 155th component to the object
         // no one knows for sure what it does
@@ -75,7 +26,7 @@ impl Object {
         let object = Object::parse(components);
         Object{contain: object}
     }
-    pub fn trigger(trigger: Trigger, trigger_components: Vec<TriggerComponent>, components: Option<Vec<Component>>) -> Result<Self, Error> {
+    pub fn trigger(trigger: Trigger, trigger_components: Vec<TriggerComponent>, components: Option<Vec<Component>>) -> Result<Self, Error<'static>> {
         let mut object: String = String::from("");
         match trigger {
             Trigger::Move { x, y, duration } => {
@@ -125,7 +76,7 @@ impl Object {
         object.push_str("155,1;");
         Ok(Object{contain: object})
     }
-    pub fn special_object(obj: SpecialObject, components: Option<Vec<Component>>) -> Result<Self, Error> {
+    pub fn special_object(obj: SpecialObject, components: Option<Vec<Component>>) -> Result<Self, Error<'static>> {
         let mut object: String = String::from("");
         match obj {
             SpecialObject::Coin( id ) => {
@@ -150,7 +101,7 @@ impl Object {
         object.push_str("155,1;");
         Ok(Object { contain: object })
     }
-    pub fn contains(self) -> String {
-        self.contain
+    pub fn contains(&self) -> &str {
+        &self.contain
     }
 }
