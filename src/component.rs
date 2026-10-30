@@ -1,14 +1,16 @@
 use crate::types::{HSV, Error as GDError};
-use std::{error::Error, fmt::Write};
+use std::{error::Error, fmt::{Write, format}};
 use regex::Regex;
 // components that user can use to add component to the level with some more "humanly readable" method
 // about components and component is in 'add' method of Level struct
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Component {
     ID(u16),
     X(f64),
     Y(f64),
     Scale(f64),
+    ScaleX(f64),
+    ScaleY(f64),
     FlipX(bool),
     FlipY(bool),
     Rotation(f32),
@@ -18,7 +20,8 @@ pub enum Component {
     ZOrder(u16),
     Groups(Vec<u16>),
     MainColorHSV(HSV),
-    SecondaryColorHSV(HSV)
+    SecondaryColorHSV(HSV),
+    Ignored,
 }
 
 impl Component {
@@ -73,15 +76,18 @@ impl Component {
                         if HSV.val_checked {"1"} else {"0"}
                 ));
             }
+            Component::ScaleX(scl) => {component.push_str(&format!("128,{scl}"))}
+            Component::ScaleY(scl) => {component.push_str(&format!("129,{scl}"))}
             _ => {}
         }
         component
     }
     pub fn from_str(str: &(String, String)) -> Result<Self, Box<dyn std::error::Error>> {
         let id_str = &str.0;
-        let value_str = &str.0;
+        let value_str = &str.1;
         let id: &str = &id_str;
         let value: &str = &value_str;
+        dbg!(id, value);
         match id {
             "1" => {Ok(Component::ID(value.parse()?))}
             "2" => {Ok(Component::X(value.parse()?))}
@@ -95,22 +101,24 @@ impl Component {
             "24" => {Ok(Component::ZLayer(value.parse()?))}
             "25" => {Ok(Component::ZOrder(value.parse()?))}
             "32" => {Ok(Component::Scale(value.parse()?))}
+            "41" => {Ok(Component::Ignored)}
+            "42" => {Ok(Component::Ignored)}
             "43" => {
-                let re = Regex::new(r"(?mu)(\d+)a(\d+)a(\d+)a([01])a([01])").unwrap();
+                let re = Regex::new(r"(?mu)(-?\d+)a(\d+(\.\d+)*)a(\d+(\.\d+)*)a([01])a([01])").unwrap();
                 let hue = re.replace_all(value, "$1").parse::<i16>()?;
                 let sat = re.replace_all(value, "$2").parse::<f32>()?;
-                let val = re.replace_all(value, "$3").parse::<f32>()?;
-                let sat_checked = re.replace_all(value, "$4").parse::<bool>()?;
-                let val_checked = re.replace_all(value, "$5").parse::<bool>()?;
+                let val = re.replace_all(value, "$4").parse::<f32>()?;
+                let sat_checked = re.replace_all(value, "$6").parse::<u8>()? != 0;
+                let val_checked = re.replace_all(value, "$7").parse::<u8>()? != 0;
                 Ok(Component::MainColorHSV(HSV { hue: hue, sat: sat, val: val, sat_checked: sat_checked, val_checked: val_checked }))
             }
             "44" => {
-                let re = Regex::new(r"(?mu)(\d+)a(\d+)a(\d+)a([01])a([01])").unwrap();
+                let re = Regex::new(r"(?mu)(-?\d+)a(\d+(\.\d+)*)a(\d+(\.\d+)*)a([01])a([01])").unwrap();
                 let hue = re.replace_all(value, "$1").parse::<i16>()?;
                 let sat = re.replace_all(value, "$2").parse::<f32>()?;
-                let val = re.replace_all(value, "$3").parse::<f32>()?;
-                let sat_checked = re.replace_all(value, "$4").parse::<bool>()?;
-                let val_checked = re.replace_all(value, "$5").parse::<bool>()?;
+                let val = re.replace_all(value, "$4").parse::<f32>()?;
+                let sat_checked = re.replace_all(value, "$6").parse::<u8>()? != 0;
+                let val_checked = re.replace_all(value, "$7").parse::<u8>()? != 0;
                 Ok(Component::SecondaryColorHSV(HSV { hue: hue, sat: sat, val: val, sat_checked: sat_checked, val_checked: val_checked }))
             }
             "57" => {
@@ -123,7 +131,13 @@ impl Component {
                 }
                 Ok(Component::Groups(result))
             }
-            _ => {Err(format!("Invalid component: ({}, {})", str.0, str.1).into())}
+            "128" => {Ok(Component::ScaleX(value.parse()?))}
+            "129" => {Ok(Component::ScaleY(value.parse()?))}
+            "36" => {Ok(Component::Ignored)}
+            "74" => {Ok(Component::Ignored)}
+            "155" => {Ok(Component::Ignored)}
+            "156" => {Ok(Component::Ignored)}
+            _ => {Ok(Component::Ignored)}
         }
     }
 }

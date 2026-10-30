@@ -11,12 +11,20 @@ use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use arboard::Clipboard;
 use regex::Regex;
+
+const requiredIDs: [&str; 3] = ["1", "2", "3"];
 // the level struct is contains only String (string of gd Level)
 pub struct Level(Vec<Object>);
 
 impl Level {
     pub fn empty() -> Self {
         Level(vec![])
+    }
+    pub fn iter(&self) -> impl Iterator<Item = &Object> + '_ {
+        self.0.iter()
+    }
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Object> + '_ {
+        self.0.iter_mut()
     }
     pub fn copy_to_clipboard(&self) -> Result<(), Box<dyn std::error::Error>> {
         
@@ -78,6 +86,7 @@ impl Level {
     pub fn decode_from_gdlvl(&mut self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
         let file = fs::read(file_path)?;
         let mut xml = self.decode_file_gdlvl(&file)?;
+        dbg!(&xml);
         let re = Regex::new(r"(?s)<k>k4</k>\s*<s>([^<]+)</s>")?;
         let caps = re.captures(&xml).ok_or("k4 not found")?;
         let k4_b64 = &caps[1];
@@ -87,9 +96,15 @@ impl Level {
         let mut level = String::new();
         gz.read_to_string(&mut level)?;
 
+        dbg!(&level);
         let split: Vec<Vec<(String, String)>> = split_string_by_obj(level).iter().map(|s| split_string_by_cmps(s.to_string())).collect();
-        let vec_cmps: Vec<Vec<Component>> = split.iter().map(|s| s.iter().map(|t| Component::from_str(t)).collect::<Result<Vec<_>, _>>()).collect::<Result<_, _>>()?;
+        dbg!(&split);
+        let (valid_objects, invalid_objects): (Vec<_>, Vec<_>) = split.into_iter().filter(|chunk| !chunk.is_empty()).partition(|chunk| {["1", "2", "3"].iter().all(|need| chunk.iter().any(|(k, _)| k == need))});
+        dbg!(&valid_objects, &invalid_objects);
+        let vec_cmps: Vec<Vec<Component>> = valid_objects.iter().map(|s| s.iter().map(|t| Component::from_str(t)).collect::<Result<Vec<_>, _>>()).collect::<Result<_, _>>().inspect_err(|e| eprintln!("parse error: {e}"))?;
+        dbg!(&vec_cmps);
         let vec_objects: Vec<Object> = vec_cmps.iter().map(|s: &Vec<Component>| Object::new(s.to_vec())).collect();
+        dbg!(&vec_objects);
 
         &self.0.extend(vec_objects);
 
@@ -98,7 +113,7 @@ impl Level {
     pub fn encode_to_gdlvl(&mut self, file_path: &str, file_path_orig: &str) -> Result<(), Box<dyn std::error::Error>> {
         let raw = fs::read(file_path_orig)?;
         let file = self.decode_file_gdlvl(&raw)?;
-        println!("file readed:\n{}\n\n", file);
+        // println!("file readed:\n{}\n\n", file);
 
         let slf: String = self.0.iter().map(|s| s.contains()).collect();
 
@@ -106,7 +121,7 @@ impl Level {
         gz.write_all(slf.as_bytes())?;
         let compressed = gz.finish()?;
         let encoded = URL_SAFE.encode(&compressed);
-        println!("main part encoded:\n{}\n\n", encoded);
+        // println!("main part encoded:\n{}\n\n", encoded);
 
         let re = Regex::new(r"(?s)<k>k4</k>\s*<s>[^<]+</s>")?;
         if !re.is_match(&file) {
@@ -115,14 +130,14 @@ impl Level {
         let new = re
             .replace(&file, format!("<k>k4</k><s>{}</s>", encoded))
             .into_owned();
-        println!("after replacing:\n{}\n\n", new);
+        // println!("after replacing:\n{}\n\n", new);
 
         let mut gz_for_file = GzEncoder::new(Vec::new(), Compression::default());
         gz_for_file.write_all(new.as_bytes())?;
         let compressed = gz_for_file.finish()?;
         let b64 = URL_SAFE.encode(&compressed);
         std::fs::write(file_path, b64.as_bytes())?;
-        println!("final version:\n{}\n\n", b64);
+        // println!("final version:\n{}\n\n", b64);
 
         Ok(())
     }

@@ -1,5 +1,5 @@
-use crate::types::Error;
-use crate::component::Component;
+use crate::types::{Error, split_string_by_cmps};
+use crate::component::{self, Component};
 use crate::specialObjs::*;
 use std::fmt::Write;
 
@@ -9,12 +9,26 @@ pub struct Object {
 }
 
 impl Object {
+    pub fn add_component(&mut self, cmp: Component) {
+        let mut component: String = String::from("");
+        component.push_str(&cmp.parse());
+        component.push_str(",");
+        &self.contain.insert_str(0, &component);
+    }
+    pub fn have_component(&self, cmp: Component) -> Result<bool, Box<dyn std::error::Error>> {
+        let components_strings = split_string_by_cmps((&self.contains()).to_string());
+        let components: Vec<Component> = components_strings.iter().map(|s| Component::from_str(s)).collect::<Result<Vec<_>, _>>()?;
+        Ok(components.iter().any(|s| s == &cmp))
+    }
     fn parse(components: Vec<Component>) -> String {
         let mut object: String = String::from("");
         // parsing components and add it to the object as string
         for component in components {
-            object.push_str(&component.parse());
-            object.push_str(",");
+            let cmp_parse = &component.parse();
+            if !cmp_parse.is_empty() {
+                object.push_str(cmp_parse);
+                object.push_str(",");
+            }
         }
         // adding 155th component to the object
         // no one knows for sure what it does

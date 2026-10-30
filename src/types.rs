@@ -2,7 +2,7 @@ use regex::Regex;
 // the GDFile struct is contains only String as well but of entire gd save file
 pub struct GDFile(pub String);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HSV {
     pub hue: i16,
     pub sat: f32,
